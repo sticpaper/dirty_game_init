@@ -1,0 +1,194 @@
+# Copyright (C) 2020, The Linux Foundation. All rights reserved.
+# Copyright (C) 2021 Amktiao.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
+#       with the distribution.
+#
+
+on init
+    # Things to initialize at boot
+    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor "schedutil"
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor "schedutil"
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_min_freq 806400
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq 2361600
+
+    # Set default touchpanel parameters
+    write /proc/touchpanel/palm_sensor 1
+    write /proc/touchpanel/palm_gamemode 0
+    write /proc/touchpanel/palm_rx_style 0
+
+    # Virtual memory default parameters
+    write /proc/sys/vm/swappiness 100
+    write /proc/sys/vm/page-cluster 0
+
+    # Kernel parameter changes
+    write /sys/module/binder/parameters/debug_mask 0
+    write /sys/module/lpm_levels/parameters/touch_sleep_enabled 1
+    write /sys/module/kernel_thermal/parameters/cpu_thermal_enabled 1
+	write /sys/module/kernel_thermal/parameters/core_thermal_enabled 1
+
+    # lowmemorykiller
+    write /sys/module/lowmemorykiller/parameters/enable_adaptive_lmk 0
+
+    # F2FS userdata parameter changes
+#    write /sys/fs/f2fs/sda17/min_fsync_blocks 20
+#    write /sys/fs/f2fs/sda17/gc_max_sleep_time 80000
+#    write /sys/fs/f2fs/sda17/gc_min_sleep_time 30000
+#    write /sys/fs/f2fs/sda17/gc_no_gc_sleep_time 400000
+#    write /sys/fs/f2fs/sda17/iostat_enable 0
+
+# Spectrum
+on property:persist.spectrum.profile=1
+    # default mode
+    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor "schedutil"
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor "schedutil"
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq 2361600
+
+on property:persist.spectrum.profile=2
+    # performance mode
+    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor "performance"
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor "performance"
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq 2457600
+
+# GameMode
+on property:sys.gameservice.gover=0
+    # 退出游戏时回滚的默认调速器模式
+    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor "schedutil"
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor "schedutil"
+    write /sys/devices/system/cpu/cpufreq/policy0/schedutil/down_rate_limit_us 20000
+	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/up_rate_limit_us 500
+	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/powersave 1
+    write /sys/devices/system/cpu/cpufreq/policy4/schedutil/down_rate_limit_us 20000
+	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/up_rate_limit_us 500
+	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/powersave 1
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq 2361600
+	write /sys/class/kgsl/kgsl-3d0/default_pwrlevel 7
+	write /sys/class/kgsl/kgsl-3d0/max_pwrlevel 0
+	write /sys/class/kgsl/kgsl-3d0/min_pwrlevel 7
+	write /sys/class/kgsl/kgsl-3d0/devfreq/min_freq "710000000"
+    write /sys/module/lpm_levels/parameters/touch_sleep_enabled 1
+    write /sys/module/kernel_thermal/parameters/cpu_thermal_enabled 1
+	write /sys/module/kernel_thermal/parameters/core_thermal_enabled 1
+	write /sys/module/cpu_boost/parameters/input_boost_freq "0:1324800"
+	write /sys/module/cpu_boost/parameters/input_boost_ms 60
+    write /sys/devices/soc/1da4000.ufshc/clkscale_enable 1
+    write /sys/devices/soc/1da4000.ufshc/clkgate_enable 1
+    write /proc/touchpanel/palm_sensor 1
+    write /proc/touchpanel/palm_gamemode 0
+    write /proc/touchpanel/palm_rx_style 0
+	write /sys/block/sda/queue/scheduler "cfq"
+
+on property:sys.gameservice.gover=1
+    # 王者荣耀模式
+    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor "schedutil"
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor "schedutil"
+    write /sys/devices/system/cpu/cpufreq/policy0/schedutil/down_rate_limit_us 30000
+	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/up_rate_limit_us 300
+	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/powersave 0
+    write /sys/devices/system/cpu/cpufreq/policy4/schedutil/down_rate_limit_us 30000
+	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/up_rate_limit_us 300
+	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/powersave 0
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq 2208000
+	write /sys/class/kgsl/kgsl-3d0/default_pwrlevel 6
+	write /sys/class/kgsl/kgsl-3d0/max_pwrlevel 0
+	write /sys/class/kgsl/kgsl-3d0/min_pwrlevel 6
+	write /sys/class/kgsl/kgsl-3d0/devfreq/min_freq "257000000"
+    write /sys/module/lpm_levels/parameters/touch_sleep_enabled 0
+    write /sys/module/kernel_thermal/parameters/cpu_thermal_enabled 1
+	write /sys/module/kernel_thermal/parameters/core_thermal_enabled 1
+	write /sys/module/cpu_boost/parameters/input_boost_freq "0:1478400"
+	write /sys/module/cpu_boost/parameters/input_boost_ms 60
+    write /sys/devices/soc/1da4000.ufshc/clkscale_enable 0
+    write /sys/devices/soc/1da4000.ufshc/clkgate_enable 0
+    write /proc/touchpanel/palm_sensor 0
+    write /proc/touchpanel/palm_gamemode 1
+    write /proc/touchpanel/palm_rx_style 0
+	write /sys/block/sda/queue/scheduler "cfq"
+
+on property:sys.gameservice.gover=2
+    # 吃鸡模式
+    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor "schedutil"
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor "schedutil"
+    write /sys/devices/system/cpu/cpufreq/policy0/schedutil/down_rate_limit_us 20000
+	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/up_rate_limit_us 300
+	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/powersave 0
+    write /sys/devices/system/cpu/cpufreq/policy4/schedutil/down_rate_limit_us 20000
+	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/up_rate_limit_us 300
+	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/powersave 1
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq 2361600
+	write /sys/class/kgsl/kgsl-3d0/default_pwrlevel 6
+	write /sys/class/kgsl/kgsl-3d0/max_pwrlevel 0
+	write /sys/class/kgsl/kgsl-3d0/min_pwrlevel 6
+	write /sys/class/kgsl/kgsl-3d0/devfreq/min_freq "257000000"
+    write /sys/module/lpm_levels/parameters/touch_sleep_enabled 0
+    write /sys/module/kernel_thermal/parameters/cpu_thermal_enabled 0
+	write /sys/module/kernel_thermal/parameters/core_thermal_enabled 0
+	write /sys/module/cpu_boost/parameters/input_boost_freq "0:1401600"
+	write /sys/module/cpu_boost/parameters/input_boost_ms 60
+    write /sys/devices/soc/1da4000.ufshc/clkscale_enable 0
+    write /sys/devices/soc/1da4000.ufshc/clkgate_enable 0
+    write /proc/touchpanel/palm_sensor 0
+    write /proc/touchpanel/palm_gamemode 1
+    write /proc/touchpanel/palm_rx_style 0
+	write /sys/block/sda/queue/scheduler "noop"
+
+on property:sys.gameservice.gover=3
+    # 原神/崩坏3
+    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor "schedutil"
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor "schedutil"
+    write /sys/devices/system/cpu/cpufreq/policy0/schedutil/down_rate_limit_us 50000
+	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/up_rate_limit_us 100
+	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/powersave 0
+    write /sys/devices/system/cpu/cpufreq/policy4/schedutil/down_rate_limit_us 50000
+	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/up_rate_limit_us 100
+	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/powersave 0
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq 2457600
+	write /sys/class/kgsl/kgsl-3d0/default_pwrlevel 4
+	write /sys/class/kgsl/kgsl-3d0/max_pwrlevel 0
+	write /sys/class/kgsl/kgsl-3d0/min_pwrlevel 4
+	write /sys/class/kgsl/kgsl-3d0/devfreq/min_freq "414000000"
+    write /sys/module/lpm_levels/parameters/touch_sleep_enabled 0
+    write /sys/module/kernel_thermal/parameters/cpu_thermal_enabled 0
+	write /sys/module/kernel_thermal/parameters/core_thermal_enabled 0
+	write /sys/module/cpu_boost/parameters/input_boost_freq "0:1670400"
+	write /sys/module/cpu_boost/parameters/input_boost_ms 400
+    write /sys/devices/soc/1da4000.ufshc/clkscale_enable 0
+    write /sys/devices/soc/1da4000.ufshc/clkgate_enable 0
+    write /proc/touchpanel/palm_sensor 0
+    write /proc/touchpanel/palm_gamemode 1
+    write /proc/touchpanel/palm_rx_style 0
+	write /sys/block/sda/queue/scheduler "noop"
+
+on property:sys.gameservice.gover=4
+    # 通用模式
+    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor "schedutil"
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor "schedutil"
+    write /sys/devices/system/cpu/cpufreq/policy0/schedutil/down_rate_limit_us 20000
+	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/up_rate_limit_us 500
+	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/powersave 0
+    write /sys/devices/system/cpu/cpufreq/policy4/schedutil/down_rate_limit_us 20000
+	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/up_rate_limit_us 500
+	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/powersave 0
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq 2361600
+	write /sys/class/kgsl/kgsl-3d0/default_pwrlevel 6
+	write /sys/class/kgsl/kgsl-3d0/max_pwrlevel 0
+	write /sys/class/kgsl/kgsl-3d0/min_pwrlevel 6
+	write /sys/class/kgsl/kgsl-3d0/devfreq/min_freq "257000000"
+    write /sys/module/lpm_levels/parameters/touch_sleep_enabled 0
+    write /sys/module/kernel_thermal/parameters/cpu_thermal_enabled 0
+	write /sys/module/kernel_thermal/parameters/core_thermal_enabled 0
+	write /sys/module/cpu_boost/parameters/input_boost_freq "0:1324800"
+	write /sys/module/cpu_boost/parameters/input_boost_ms 60
+    write /sys/devices/soc/1da4000.ufshc/clkscale_enable 0
+    write /sys/devices/soc/1da4000.ufshc/clkgate_enable 0
+    write /proc/touchpanel/palm_sensor 0
+    write /proc/touchpanel/palm_gamemode 1
+    write /proc/touchpanel/palm_rx_style 0
+	write /sys/block/sda/queue/scheduler "cfq"

@@ -1,5 +1,5 @@
-# Copyright (C) 2020, The Linux Foundation. All rights reserved.
-# Copyright (C) 2021 Amktiao.
+# Copyright (C) 2020-2021, The Linux Foundation. All rights reserved.
+# Copyright (C) 2021 Amktiao, All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -11,184 +11,115 @@
 #       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
 #
+# inherit lineage_iosched.rc
+# control exthm_game_setprop
+
+on boot
+	chown system system /dev/xiaomi-touch
+	chmod 0664 /dev/xiaomi-touch
+
+## ADD: 赵悦男添加TODO标记: 我们使用cfq, 不再加载bfq的I/O scheduler 2021-07-05 124408
+#on post-fs
+#	insmod /vendor/lib/modules/bfq-iosched.ko
+## END: 赵悦男添加TODO标记: 我们使用cfq, 不再加载bfq的I/O scheduler 2021-07-05 124408
 
 on init
-    # Things to initialize at boot
-    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor "schedutil"
-    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor "schedutil"
-    write /sys/devices/system/cpu/cpufreq/policy4/scaling_min_freq 806400
-    write /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq 2361600
+	# Set default touchpanel parameters
+	write /proc/touchpanel/palm_sensor 1
+	write /proc/touchpanel/palm_gamemode 0
+	write /proc/touchpanel/palm_rx_style 0
+	write /proc/touchpanel/esd_check_enable 1
 
-    # Set default touchpanel parameters
-    write /proc/touchpanel/palm_sensor 1
-    write /proc/touchpanel/palm_gamemode 0
-    write /proc/touchpanel/palm_rx_style 0
+	# swappiness parameters
+	write /proc/sys/vm/swappiness 60
 
-    # Virtual memory default parameters
-    write /proc/sys/vm/swappiness 100
-    write /proc/sys/vm/page-cluster 0
-
-    # Kernel parameter changes
-    write /sys/module/binder/parameters/debug_mask 0
-    write /sys/module/lpm_levels/parameters/touch_sleep_enabled 1
-    write /sys/module/kernel_thermal/parameters/cpu_thermal_enabled 1
+	# kernel parameter changes
+	write /sys/module/lpm_levels/parameters/touch_sleep_enabled 1
+	write /sys/module/kernel_thermal/parameters/cpu_thermal_enabled 1
 	write /sys/module/kernel_thermal/parameters/core_thermal_enabled 1
+	write /sys/module/msm_thermal/core_control/enabled 1
 
-    # lowmemorykiller
-    write /sys/module/lowmemorykiller/parameters/enable_adaptive_lmk 0
-
-    # F2FS userdata parameter changes
-#    write /sys/fs/f2fs/sda17/min_fsync_blocks 20
-#    write /sys/fs/f2fs/sda17/gc_max_sleep_time 80000
-#    write /sys/fs/f2fs/sda17/gc_min_sleep_time 30000
-#    write /sys/fs/f2fs/sda17/gc_no_gc_sleep_time 400000
-#    write /sys/fs/f2fs/sda17/iostat_enable 0
-
-# Spectrum
-on property:persist.spectrum.profile=1
-    # default mode
-    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor "schedutil"
-    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor "schedutil"
-    write /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq 2361600
-
-on property:persist.spectrum.profile=2
-    # performance mode
-    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor "performance"
-    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor "performance"
-    write /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq 2457600
-
-# GameMode
-on property:sys.gameservice.gover=0
-    # 退出游戏时回滚的默认调速器模式
-    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor "schedutil"
-    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor "schedutil"
-    write /sys/devices/system/cpu/cpufreq/policy0/schedutil/down_rate_limit_us 20000
-	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/up_rate_limit_us 500
-	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/powersave 1
-    write /sys/devices/system/cpu/cpufreq/policy4/schedutil/down_rate_limit_us 20000
-	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/up_rate_limit_us 500
-	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/powersave 1
-    write /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq 2361600
-	write /sys/class/kgsl/kgsl-3d0/default_pwrlevel 7
-	write /sys/class/kgsl/kgsl-3d0/max_pwrlevel 0
-	write /sys/class/kgsl/kgsl-3d0/min_pwrlevel 7
-	write /sys/class/kgsl/kgsl-3d0/devfreq/min_freq "710000000"
-    write /sys/module/lpm_levels/parameters/touch_sleep_enabled 1
-    write /sys/module/kernel_thermal/parameters/cpu_thermal_enabled 1
-	write /sys/module/kernel_thermal/parameters/core_thermal_enabled 1
+	# device-tree default cpu_boost parameters
 	write /sys/module/cpu_boost/parameters/input_boost_freq "0:1324800"
-	write /sys/module/cpu_boost/parameters/input_boost_ms 60
-    write /sys/devices/soc/1da4000.ufshc/clkscale_enable 1
-    write /sys/devices/soc/1da4000.ufshc/clkgate_enable 1
-    write /proc/touchpanel/palm_sensor 1
-    write /proc/touchpanel/palm_gamemode 0
-    write /proc/touchpanel/palm_rx_style 0
-	write /sys/block/sda/queue/scheduler "cfq"
+	write /sys/module/cpu_boost/parameters/input_boost_ms 40
+
+## ADD: 赵悦男添加更改: exthmui_game调度添加 2021-07-04 000623
+# GameMode scheduler
+# game_scheduler
+# 0 为default 默认参数
+# 1 为王者荣耀游戏模式 包名: com.tencent.tmgp.sgame
+# 2 为和平精英游戏模式 包名: com.tencent.tmgp.pubgmhd
+# 3 为通用模式, 添加到exthm游戏列表的游戏, 仅应用touchpanel触摸屏部分的调整
+on property:sys.gameservice.gover=0
+	write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 518400
+	write /sys/devices/system/cpu/cpu0/cpufreq/interactive/hispeed_freq 1248000
+	write /sys/devices/system/cpu/cpu0/cpufreq/interactive/target_loads "83 1804800:95"
+	write /sys/devices/system/cpu/cpu4/cpufreq/scaling_min_freq 806400
+	write /sys/devices/system/cpu/cpu4/cpufreq/interactive/hispeed_freq 1574400
+	write /sys/devices/system/cpu/cpu4/cpufreq/interactive/target_loads "83 1939200:90 2016000:95"
+	write /proc/touchpanel/palm_sensor 1
+	write /proc/touchpanel/palm_gamemode 0
+	write /proc/touchpanel/palm_rx_style 0
+	write /proc/touchpanel/esd_check_enable 1
+	write /sys/module/lpm_levels/parameters/touch_sleep_enabled 1
+	write /sys/module/kernel_thermal/parameters/cpu_thermal_enabled 1
+	write /sys/module/kernel_thermal/parameters/core_thermal_enabled 1
+	write /sys/module/msm_thermal/core_control/enabled 1
+	write /sys/module/cpu_boost/parameters/input_boost_freq "0:1324800"
+	write /sys/module/cpu_boost/parameters/input_boost_ms 40
 
 on property:sys.gameservice.gover=1
-    # 王者荣耀模式
-    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor "schedutil"
-    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor "schedutil"
-    write /sys/devices/system/cpu/cpufreq/policy0/schedutil/down_rate_limit_us 30000
-	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/up_rate_limit_us 300
-	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/powersave 0
-    write /sys/devices/system/cpu/cpufreq/policy4/schedutil/down_rate_limit_us 30000
-	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/up_rate_limit_us 300
-	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/powersave 0
-    write /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq 2208000
-	write /sys/class/kgsl/kgsl-3d0/default_pwrlevel 6
-	write /sys/class/kgsl/kgsl-3d0/max_pwrlevel 0
-	write /sys/class/kgsl/kgsl-3d0/min_pwrlevel 6
-	write /sys/class/kgsl/kgsl-3d0/devfreq/min_freq "257000000"
-    write /sys/module/lpm_levels/parameters/touch_sleep_enabled 0
-    write /sys/module/kernel_thermal/parameters/cpu_thermal_enabled 1
+	write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 672000
+	write /sys/devices/system/cpu/cpu0/cpufreq/interactive/hispeed_freq 1324800
+	write /sys/devices/system/cpu/cpu0/cpufreq/interactive/target_loads "80 1670400:90"
+	write /sys/devices/system/cpu/cpu4/cpufreq/scaling_min_freq 806400
+	write /sys/devices/system/cpu/cpu4/cpufreq/interactive/hispeed_freq 1574400
+	write /sys/devices/system/cpu/cpu4/cpufreq/interactive/target_loads "80 1939200:80 2016000:90"
+	write /proc/touchpanel/palm_sensor 1
+	write /proc/touchpanel/palm_gamemode 2
+	write /proc/touchpanel/palm_rx_style 1
+	write /proc/touchpanel/esd_check_enable 0
+	write /sys/module/lpm_levels/parameters/touch_sleep_enabled 0
+	write /sys/module/kernel_thermal/parameters/cpu_thermal_enabled 0
 	write /sys/module/kernel_thermal/parameters/core_thermal_enabled 1
-	write /sys/module/cpu_boost/parameters/input_boost_freq "0:1478400"
-	write /sys/module/cpu_boost/parameters/input_boost_ms 60
-    write /sys/devices/soc/1da4000.ufshc/clkscale_enable 0
-    write /sys/devices/soc/1da4000.ufshc/clkgate_enable 0
-    write /proc/touchpanel/palm_sensor 0
-    write /proc/touchpanel/palm_gamemode 1
-    write /proc/touchpanel/palm_rx_style 0
-	write /sys/block/sda/queue/scheduler "cfq"
-
-on property:sys.gameservice.gover=2
-    # 吃鸡模式
-    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor "schedutil"
-    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor "schedutil"
-    write /sys/devices/system/cpu/cpufreq/policy0/schedutil/down_rate_limit_us 20000
-	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/up_rate_limit_us 300
-	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/powersave 0
-    write /sys/devices/system/cpu/cpufreq/policy4/schedutil/down_rate_limit_us 20000
-	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/up_rate_limit_us 300
-	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/powersave 1
-    write /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq 2361600
-	write /sys/class/kgsl/kgsl-3d0/default_pwrlevel 6
-	write /sys/class/kgsl/kgsl-3d0/max_pwrlevel 0
-	write /sys/class/kgsl/kgsl-3d0/min_pwrlevel 6
-	write /sys/class/kgsl/kgsl-3d0/devfreq/min_freq "257000000"
-    write /sys/module/lpm_levels/parameters/touch_sleep_enabled 0
-    write /sys/module/kernel_thermal/parameters/cpu_thermal_enabled 0
-	write /sys/module/kernel_thermal/parameters/core_thermal_enabled 0
+	write /sys/module/msm_thermal/core_control/enabled 1
 	write /sys/module/cpu_boost/parameters/input_boost_freq "0:1401600"
 	write /sys/module/cpu_boost/parameters/input_boost_ms 60
-    write /sys/devices/soc/1da4000.ufshc/clkscale_enable 0
-    write /sys/devices/soc/1da4000.ufshc/clkgate_enable 0
-    write /proc/touchpanel/palm_sensor 0
-    write /proc/touchpanel/palm_gamemode 1
-    write /proc/touchpanel/palm_rx_style 0
-	write /sys/block/sda/queue/scheduler "noop"
+
+on property:sys.gameservice.gover=2
+	write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 518400
+	write /sys/devices/system/cpu/cpu0/cpufreq/interactive/hispeed_freq 1248000
+	write /sys/devices/system/cpu/cpu0/cpufreq/interactive/target_loads "80 1804800:90"
+	write /sys/devices/system/cpu/cpu4/cpufreq/scaling_min_freq 806400
+	write /sys/devices/system/cpu/cpu4/cpufreq/interactive/hispeed_freq 1574400
+	write /sys/devices/system/cpu/cpu4/cpufreq/interactive/target_loads "80 1939200:90 2016000:95"
+	write /proc/touchpanel/palm_sensor 1
+	write /proc/touchpanel/palm_gamemode 1
+	write /proc/touchpanel/palm_rx_style 1
+	write /proc/touchpanel/esd_check_enable 0
+	write /sys/module/lpm_levels/parameters/touch_sleep_enabled 0
+	write /sys/module/kernel_thermal/parameters/cpu_thermal_enabled 1
+	write /sys/module/kernel_thermal/parameters/core_thermal_enabled 0
+	write /sys/module/msm_thermal/core_control/enabled 0
+	write /sys/module/cpu_boost/parameters/input_boost_freq "0:1324800"
+	write /sys/module/cpu_boost/parameters/input_boost_ms 40
 
 on property:sys.gameservice.gover=3
-    # 原神/崩坏3
-    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor "schedutil"
-    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor "schedutil"
-    write /sys/devices/system/cpu/cpufreq/policy0/schedutil/down_rate_limit_us 50000
-	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/up_rate_limit_us 100
-	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/powersave 0
-    write /sys/devices/system/cpu/cpufreq/policy4/schedutil/down_rate_limit_us 50000
-	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/up_rate_limit_us 100
-	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/powersave 0
-    write /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq 2457600
-	write /sys/class/kgsl/kgsl-3d0/default_pwrlevel 4
-	write /sys/class/kgsl/kgsl-3d0/max_pwrlevel 0
-	write /sys/class/kgsl/kgsl-3d0/min_pwrlevel 4
-	write /sys/class/kgsl/kgsl-3d0/devfreq/min_freq "414000000"
-    write /sys/module/lpm_levels/parameters/touch_sleep_enabled 0
-    write /sys/module/kernel_thermal/parameters/cpu_thermal_enabled 0
-	write /sys/module/kernel_thermal/parameters/core_thermal_enabled 0
-	write /sys/module/cpu_boost/parameters/input_boost_freq "0:1670400"
-	write /sys/module/cpu_boost/parameters/input_boost_ms 400
-    write /sys/devices/soc/1da4000.ufshc/clkscale_enable 0
-    write /sys/devices/soc/1da4000.ufshc/clkgate_enable 0
-    write /proc/touchpanel/palm_sensor 0
-    write /proc/touchpanel/palm_gamemode 1
-    write /proc/touchpanel/palm_rx_style 0
-	write /sys/block/sda/queue/scheduler "noop"
-
-on property:sys.gameservice.gover=4
-    # 通用模式
-    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor "schedutil"
-    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor "schedutil"
-    write /sys/devices/system/cpu/cpufreq/policy0/schedutil/down_rate_limit_us 20000
-	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/up_rate_limit_us 500
-	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/powersave 0
-    write /sys/devices/system/cpu/cpufreq/policy4/schedutil/down_rate_limit_us 20000
-	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/up_rate_limit_us 500
-	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/powersave 0
-    write /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq 2361600
-	write /sys/class/kgsl/kgsl-3d0/default_pwrlevel 6
-	write /sys/class/kgsl/kgsl-3d0/max_pwrlevel 0
-	write /sys/class/kgsl/kgsl-3d0/min_pwrlevel 6
-	write /sys/class/kgsl/kgsl-3d0/devfreq/min_freq "257000000"
-    write /sys/module/lpm_levels/parameters/touch_sleep_enabled 0
-    write /sys/module/kernel_thermal/parameters/cpu_thermal_enabled 0
-	write /sys/module/kernel_thermal/parameters/core_thermal_enabled 0
+	write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 518400
+	write /sys/devices/system/cpu/cpu0/cpufreq/interactive/hispeed_freq 1248000
+	write /sys/devices/system/cpu/cpu0/cpufreq/interactive/target_loads "83 1804800:95"
+	write /sys/devices/system/cpu/cpu4/cpufreq/scaling_min_freq 806400
+	write /sys/devices/system/cpu/cpu4/cpufreq/interactive/hispeed_freq 1574400
+	write /sys/devices/system/cpu/cpu4/cpufreq/interactive/target_loads "83 1939200:90 2016000:95"
+	write /proc/touchpanel/palm_sensor 1
+	write /proc/touchpanel/palm_gamemode 2
+	write /proc/touchpanel/palm_rx_style 1
+	write /proc/touchpanel/esd_check_enable 0
+	write /sys/module/lpm_levels/parameters/touch_sleep_enabled 0
+	write /sys/module/kernel_thermal/parameters/cpu_thermal_enabled 0
+	write /sys/module/kernel_thermal/parameters/core_thermal_enabled 1
+	write /sys/module/msm_thermal/core_control/enabled 1
 	write /sys/module/cpu_boost/parameters/input_boost_freq "0:1324800"
-	write /sys/module/cpu_boost/parameters/input_boost_ms 60
-    write /sys/devices/soc/1da4000.ufshc/clkscale_enable 0
-    write /sys/devices/soc/1da4000.ufshc/clkgate_enable 0
-    write /proc/touchpanel/palm_sensor 0
-    write /proc/touchpanel/palm_gamemode 1
-    write /proc/touchpanel/palm_rx_style 0
-	write /sys/block/sda/queue/scheduler "cfq"
+	write /sys/module/cpu_boost/parameters/input_boost_ms 40
+
+## END: 赵悦男添加更改: exthmui_game调度添加 2021-07-04 000623
